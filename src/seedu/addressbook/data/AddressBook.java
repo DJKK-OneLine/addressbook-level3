@@ -88,13 +88,20 @@ public class AddressBook {
      * @throws DuplicatePersonException if an equivalent person already exists.
      */
     public void addPerson(Person toAdd) throws DuplicatePersonException {
-    	_addPerson(toAdd);
+    	prevStates.push(_addPerson(toAdd));
     }
     
     private PreviousState _addPerson(Person toAdd) throws DuplicatePersonException {
-        syncTagsWithMasterList(toAdd);
+        PreviousState stateFromSyncTag = syncTagsWithMasterList(toAdd);
         allPersons.add(toAdd);
-        return null;
+        final Person finalToAdd = toAdd;
+        return new PreviousState() {
+			@Override
+			public void apply() throws Exception {
+				allPersons.remove(finalToAdd);
+				stateFromSyncTag.apply();
+			}
+        };
     }
 
     /**
@@ -108,7 +115,13 @@ public class AddressBook {
     
     private PreviousState _addTag(Tag toAdd) throws DuplicateTagException {
         allTags.add(toAdd);
-        return null;
+        final Tag finalToAdd = toAdd;
+        return new PreviousState() {
+			@Override
+			public void apply() throws Exception {
+				allTags.remove(finalToAdd);
+			}
+        };
     }
 
     /**
@@ -173,9 +186,25 @@ public class AddressBook {
     }
 
     private PreviousState _clear() {
+    	UniquePersonList oldPersons = new UniquePersonList(allPersons);
+    	UniqueTagList oldTags = new UniqueTagList(allTags);
         allPersons.clear();
         allTags.clear();
-        return null;
+        return new PreviousState() {
+			@Override
+			public void apply() throws Exception {
+				allPersons.clear();
+				Iterator<Person> personIter = oldPersons.iterator();
+				while (personIter.hasNext()) {
+					allPersons.add(personIter.next());
+				}
+				allTags.clear();
+				Iterator<Tag> tagIter = oldTags.iterator();
+				while (tagIter.hasNext()) {
+					allTags.add(tagIter.next());
+				}
+			}
+        };
     }
 
     /**
