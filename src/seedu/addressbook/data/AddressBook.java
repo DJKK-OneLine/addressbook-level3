@@ -56,6 +56,7 @@ public class AddressBook {
      */
     private PreviousState syncTagsWithMasterList(Person person) {
         final UniqueTagList personTags = person.getTags();
+        Set<Tag> oldTags = allTags.toSet();
         allTags.mergeFrom(personTags);
 
         // Create map with values = tag object references in the master list
@@ -70,7 +71,13 @@ public class AddressBook {
             commonTagReferences.add(masterTagObjects.get(tag));
         }
         person.setTags(new UniqueTagList(commonTagReferences));
-        return null;
+        return new PreviousState() {
+			@Override
+			public void apply() throws Exception {
+				allTags.clear();
+				allTags.addAll(new UniqueTagList(oldTags));
+			}
+        };
     }
 
     /**
@@ -96,7 +103,7 @@ public class AddressBook {
      * @throws DuplicateTagException if an equivalent tag already exists.
      */
     public void addTag(Tag toAdd) throws DuplicateTagException {
-        allTags.add(toAdd);
+    	_addTag(toAdd);
     }
     
     private PreviousState _addTag(Tag toAdd) throws DuplicateTagException {
@@ -129,7 +136,13 @@ public class AddressBook {
     
     private PreviousState _removePerson(ReadOnlyPerson toRemove) throws PersonNotFoundException {
         allPersons.remove(toRemove);
-        return null;
+        final ReadOnlyPerson finalToRemove = toRemove;
+        return new PreviousState() {
+			@Override
+			public void apply() throws Exception {
+				addPerson(new Person(finalToRemove));
+			}
+        };
     }
 
     /**
@@ -143,7 +156,13 @@ public class AddressBook {
     
     private PreviousState _removeTag(Tag toRemove) throws TagNotFoundException {
         allTags.remove(toRemove);
-        return null;
+        final Tag finalToRemove = toRemove;
+        return new PreviousState() {
+			@Override
+			public void apply() throws Exception {
+				allTags.add(finalToRemove);
+			}
+        };
     }
 
     /**
