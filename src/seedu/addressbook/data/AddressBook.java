@@ -110,7 +110,7 @@ public class AddressBook {
      * @throws DuplicateTagException if an equivalent tag already exists.
      */
     public void addTag(Tag toAdd) throws DuplicateTagException {
-    	_addTag(toAdd);
+    	prevStates.push(_addTag(toAdd));
     }
     
     private PreviousState _addTag(Tag toAdd) throws DuplicateTagException {
@@ -144,7 +144,7 @@ public class AddressBook {
      * @throws PersonNotFoundException if no such Person could be found.
      */
     public void removePerson(ReadOnlyPerson toRemove) throws PersonNotFoundException {
-    	_removePerson(toRemove);
+    	prevStates.push(_removePerson(toRemove));
     }
     
     private PreviousState _removePerson(ReadOnlyPerson toRemove) throws PersonNotFoundException {
@@ -153,7 +153,7 @@ public class AddressBook {
         return new PreviousState() {
 			@Override
 			public void apply() throws Exception {
-				addPerson(new Person(finalToRemove));
+				_addPerson(new Person(finalToRemove));
 			}
         };
     }
@@ -164,7 +164,7 @@ public class AddressBook {
      * @throws TagNotFoundException if no such Tag could be found.
      */
     public void removeTag(Tag toRemove) throws TagNotFoundException {
-    	_removeTag(toRemove);
+    	prevStates.push(_removeTag(toRemove));
     }
     
     private PreviousState _removeTag(Tag toRemove) throws TagNotFoundException {
@@ -182,7 +182,7 @@ public class AddressBook {
      * Clears all persons and tags from the address book.
      */
     public void clear() {
-    	_clear();
+    	prevStates.push(_clear());
     }
 
     private PreviousState _clear() {
