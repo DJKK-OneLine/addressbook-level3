@@ -220,6 +220,25 @@ public class AddressBook {
     public UniqueTagList getAllTags() {
         return new UniqueTagList(allTags);
     }
+    
+    /**
+     * Returns the AddressBook to the previous state before the last non-undo function.
+     *
+     * @throws TagNotFoundException if no such Tag could be found.
+     */
+    public void undo() throws Exception {
+    	if (prevStates.isEmpty()) {
+    		throw new IllegalStateException("No previous state found.");
+    	}
+    	prevStates.pop().apply();
+    }
+    
+    /**
+     * Returns whether or not the AddressBook have a previous state it can be restored to.
+     */
+    public boolean havePreviousState() {
+    	return !prevStates.isEmpty();
+    }
 
     @Override
     public boolean equals(Object other) {
