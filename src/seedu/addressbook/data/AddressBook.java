@@ -45,6 +45,10 @@ public class AddressBook {
         for (Person p : allPersons) {
             syncTagsWithMasterList(p);
         }
+    
+    private abstract class PreviousState {
+    	public abstract void apply() throws Exception;
+    }
     }
 
     /**
