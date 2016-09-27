@@ -20,6 +20,8 @@ public class AddressBook {
     private final UniquePersonList allPersons;
     private final UniqueTagList allTags; // can contain tags not attached to any person
 
+    private final Stack<PreviousState> prevStates = new Stack<PreviousState>();
+    
     public static AddressBook empty() {
         return new AddressBook();
     }
@@ -45,10 +47,6 @@ public class AddressBook {
         for (Person p : allPersons) {
             syncTagsWithMasterList(p);
         }
-    
-    private abstract class PreviousState {
-    	public abstract void apply() throws Exception;
-    }
     }
 
     /**
@@ -56,7 +54,7 @@ public class AddressBook {
      *  - exists in the master list {@link #allTags}
      *  - points to a Tag object in the master list
      */
-    private void syncTagsWithMasterList(Person person) {
+    private PreviousState syncTagsWithMasterList(Person person) {
         final UniqueTagList personTags = person.getTags();
         allTags.mergeFrom(personTags);
 
@@ -72,6 +70,7 @@ public class AddressBook {
             commonTagReferences.add(masterTagObjects.get(tag));
         }
         person.setTags(new UniqueTagList(commonTagReferences));
+        return null;
     }
 
     /**
@@ -82,8 +81,13 @@ public class AddressBook {
      * @throws DuplicatePersonException if an equivalent person already exists.
      */
     public void addPerson(Person toAdd) throws DuplicatePersonException {
+    	_addPerson(toAdd);
+    }
+    
+    private PreviousState _addPerson(Person toAdd) throws DuplicatePersonException {
         syncTagsWithMasterList(toAdd);
         allPersons.add(toAdd);
+        return null;
     }
 
     /**
@@ -93,6 +97,11 @@ public class AddressBook {
      */
     public void addTag(Tag toAdd) throws DuplicateTagException {
         allTags.add(toAdd);
+    }
+    
+    private PreviousState _addTag(Tag toAdd) throws DuplicateTagException {
+        allTags.add(toAdd);
+        return null;
     }
 
     /**
@@ -115,7 +124,12 @@ public class AddressBook {
      * @throws PersonNotFoundException if no such Person could be found.
      */
     public void removePerson(ReadOnlyPerson toRemove) throws PersonNotFoundException {
+    	_removePerson(toRemove);
+    }
+    
+    private PreviousState _removePerson(ReadOnlyPerson toRemove) throws PersonNotFoundException {
         allPersons.remove(toRemove);
+        return null;
     }
 
     /**
@@ -124,15 +138,25 @@ public class AddressBook {
      * @throws TagNotFoundException if no such Tag could be found.
      */
     public void removeTag(Tag toRemove) throws TagNotFoundException {
+    	_removeTag(toRemove);
+    }
+    
+    private PreviousState _removeTag(Tag toRemove) throws TagNotFoundException {
         allTags.remove(toRemove);
+        return null;
     }
 
     /**
      * Clears all persons and tags from the address book.
      */
     public void clear() {
+    	_clear();
+    }
+
+    private PreviousState _clear() {
         allPersons.clear();
         allTags.clear();
+        return null;
     }
 
     /**
@@ -161,5 +185,9 @@ public class AddressBook {
     public int hashCode() {
         // use this method for custom fields hashing instead of implementing your own
         return Objects.hash(allPersons, allTags);
+    }
+    
+    private abstract class PreviousState {
+    	public abstract void apply() throws Exception;
     }
 }
